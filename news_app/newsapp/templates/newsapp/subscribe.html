@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container d-flex flex-column align-items-center mt-5">
+
+    <!-- Page Heading -->
+    <h1 class="mb-5 display-5 fw-bold text-center">Subscribe</h1>
+
+    <form method="POST" class="subscription-form p-5 rounded shadow-lg text-center" style="max-width: 500px; width: 100%; background-color: #ffffff;">
+        {% csrf_token %}
+
+        <!-- Publisher Section -->
+        <select name="publisher_id" class="form-select form-select-lg mb-2 styled-select">
+            <option value="">Our Publisher List</option>
+            {% for publisher in publishers %}
+                <option value="{{ publisher.id }}">{{ publisher.user.username }}</option>
+            {% endfor %}
+        </select>
+
+        <!-- Journalist Section -->
+        <select name="journalist_id" class="form-select form-select-lg mb-2 styled-select">
+            <option value="">Our Journalists</option>
+            {% for journalist in journalists %}
+                <option value="{{ journalist.id }}">{{ journalist.user.username }}</option>
+            {% endfor %}
+        </select>
+
+        <!-- Subscribe Button -->
+        <div class="d-grid mt-3">
+            <button type="submit" class="btn btn-gradient btn-lg">Subscribe</button>
+        </div>
+    </form>
+
+    <!-- Return to Home -->
+    <a href="{% url 'news_app:home' %}" class="btn btn-link mt-4">Return to Home</a>
+
+</div>
+
+<style>
+/* Headings */
+h1.display-5 {
+    font-size: 3rem;
+    color: #333;
+}
+
+h3 {
+    font-size: 1.6rem;
+}
+
+/* Select styling */
+.styled-select {
+    padding: 10px 15px;
+    font-size: 1.1rem;
+    border-radius: 0.5rem;
+    border: 1px solid #ccc;
+    transition: all 0.3s ease, transform 0.2s;
+}
+.styled-select:hover, .styled-select:focus {
+    border-color: #6a11cb;
+    box-shadow: 0 0 8px rgba(106, 17, 203, 0.3);
+    transform: scale(1.02);
+    outline: none;
+}
+
+/* Card hover effect for form */
+.subscription-form {
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+.subscription-form:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 25px rgba(0,0,0,0.15);
+}
+
+/* Gradient button */
+.btn-gradient {
+    background: linear-gradient(45deg, #635e69ff, #9ea9bcff);
+    color: white;
+    border: none;
+    font-weight: bold;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+.btn-gradient:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+</style>
+{% endblock %}

@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+.btn-bubble {
+    display: inline-block;
+    padding: 12px 25px;
+    background-color: #b0b0b0;
+    color: #fff;
+    text-decoration: none;
+    border-radius: 25px;
+    font-size: 16px;
+    transition: background 0.3s ease;
+    cursor: pointer;
+}
+
+.btn-bubble:hover {
+    background-color: #8a8a8a;
+}
+
+.btn-logout {
+    background-color: #d9534f;
+}
+
+.btn-logout:hover {
+    background-color: #c9302c;
+}
+</style>
+
+<div class="container" style="margin-top: 50px; text-align: center;">
+    {% if group %}
+        <h2>Welcome, {{ user.username }} ({{ group }})</h2>
+        <p>Select an option below:</p>
+
+        <ul style="list-style: none; padding: 0;">
+            {% for option in options %}
+                <li style="margin: 10px;">
+                    <a href="{% url option.url_name %}" class="btn-bubble">
+                        {{ option.label }}
+                    </a>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>{{ message }}</p>
+    {% endif %}
+</div>
+
+<div class="mt-3 text-center">
+    <a href="{% url 'news_app:logout' %}" class="btn-bubble btn-logout">
+        Logout
+    </a>
+</div>
+{% endblock %}

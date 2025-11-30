@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+
+    <h1 class="text-center mb-4 fw-bold">📚 Your Articles & Newsletters</h1>
+
+    <!-- Articles Section -->
+    <h2 class="mt-4 text-primary">Latest Articles</h2>
+    {% if articles %}
+        <div class="list-group mb-5">
+            {% for article in articles %}
+                <a href="{% url 'news_app:read_article' article.id %}" class="list-group-item list-group-item-action article-card">
+                    <h5 class="mb-1 fw-bold">{{ article.title }}</h5>
+                    <small>By {{ article.journalist.user.username }} • {{ article.created_at|date:"M d, Y" }}</small>
+                </a>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="text-muted">No articles yet from your subscriptions.</p>
+    {% endif %}
+
+    <!-- Newsletters Section -->
+    <h2 class="mt-5 text-success">Latest Newsletters</h2>
+    {% if newsletters %}
+        <div class="list-group">
+            {% for newsletter in newsletters %}
+                <a class="list-group-item list-group-item-action article-card">
+                    <h5 class="mb-1 fw-bold">{{ newsletter.title }}</h5>
+                    <small>By {{ newsletter.publisher.user.username }} • {{ newsletter.created_at|date:"M d, Y" }}</small>
+                </a>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="text-muted">No newsletters yet from your subscribed publishers.</p>
+    {% endif %}
+
+    <!-- Back Home Button -->
+    <div class="text-center mt-5">
+        <a href="{% url 'news_app:home' %}" class="btn btn-secondary">Return to Home</a>
+    </div>
+</div>
+
+<style>
+.article-card {
+    transition: transform .2s, box-shadow .2s;
+    border-radius: 10px;
+    margin-bottom: 10px;
+}
+.article-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+</style>
+
+{% endblock %}

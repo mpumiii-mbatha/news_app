@@ -1,0 +1,74 @@
+{% load static %}
+
+<div class="form-container">
+    <h2 class="form-title">Register Under Publisher</h2>
+
+    <form method="POST" class="bubble-form">
+        {% csrf_token %}
+
+        <label>Select Publisher:</label>
+        <select name="publisher_id" class="bubble-input">
+            {% for publisher in publishers %}
+                <option value="{{ publisher.id }}">{{ publisher.user.username }}</option>
+            {% endfor %}
+        </select>
+
+        <button type="submit" class="bubble-btn primary">Register</button>
+    </form>
+</div>
+
+<style>
+.form-container {
+    max-width: 450px;
+    margin: 80px auto;
+    padding: 30px;
+    background-color: #78808979;
+    border-radius: 25px;
+    text-align: center;
+    font-family: 'Windorse', sans-serif;
+}
+
+.form-title {
+    font-size: 24px;
+    margin-bottom: 20px;
+}
+
+.bubble-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    align-items: center;
+}
+
+.bubble-input {
+    width: 90%;
+    padding: 12px;
+    border-radius: 20px;
+    border: 1px solid #aaa;
+    outline: none;
+    font-size: 14px;
+}
+
+.bubble-btn {
+    padding: 10px 25px;
+    border-radius: 25px;
+    border: none;
+    background: #4A90E2;
+    color: #fff;
+    cursor: pointer;
+    font-size: 16px;
+    transition: .3s ease;
+}
+
+.bubble-btn:hover {
+    opacity: .85;
+    transform: translateY(-2px);
+}
+
+label {
+    font-weight: 600;
+    color: #333;
+    align-self: flex-start;
+    margin-left: 5%;
+}
+</style>

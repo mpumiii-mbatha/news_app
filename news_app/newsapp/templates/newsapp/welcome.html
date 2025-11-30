@@ -1,0 +1,79 @@
+{% load static %}
+
+{% block content %}
+<div class="welcome-container">
+    <h2 class="welcome-title">Welcome, {{ user.username }}</h2>
+
+    <hr class="divider">
+
+    <h1 class="main-title">Welcome to NewsApp</h1>
+    <p class="subtitle">Sign up or log in to continue.</p>
+
+    <div class="auth-buttons">
+        <a href="{% url 'news_app:register' %}" class="bubble-btn primary">Register</a>
+        <a href="{% url 'news_app:login' %}" class="bubble-btn secondary">Login</a>
+    </div>
+</div>
+
+<style>
+.welcome-container {
+    max-width: 800px;
+    margin: 50px auto;
+    padding: 30px;
+    background-color: #78808979;
+    border-radius: 25px;
+    font-family: 'Windorse', sans-serif;
+    text-align: center;
+    color: #444;
+}
+
+.welcome-title {
+    font-size: 26px;
+    margin-bottom: 10px;
+}
+
+.roles {
+    font-size: 14px;
+    color: #555;
+}
+
+.bubble-links {
+    margin: 20px 0;
+}
+
+.divider {
+    margin: 30px 0;
+    border: none;
+    border-top: 1px solid #bbb;
+}
+
+.main-title {
+    font-size: 32px;
+    margin-bottom: 10px;
+}
+
+.subtitle {
+    color: #666;
+    margin-bottom: 25px;
+}
+
+.bubble-btn {
+    padding: 10px 20px;
+    border-radius: 25px;
+    text-decoration: none;
+    background: #999;
+    color: #fff;
+    margin: 5px;
+    display: inline-block;
+    transition: .3s;
+}
+
+.bubble-btn:hover {
+    opacity: .85;
+    transform: translateY(-2px);
+}
+
+.primary { background: #4A90E2; }
+.secondary { background: #777; }
+</style>
+{% endblock %}

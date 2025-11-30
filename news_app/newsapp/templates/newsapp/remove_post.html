@@ -1,0 +1,7 @@
+{% load static %}
+<h2>Remove Post</h2>
+<p>Are you sure you want to remove "{{ post.title }}"?</p>
+<form method="POST">
+    {% csrf_token %}
+    <button type="submit">Yes, Remove</button>
+</form>

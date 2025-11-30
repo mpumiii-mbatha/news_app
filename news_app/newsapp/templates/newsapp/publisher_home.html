@@ -1,0 +1,5 @@
+{% load static %}
+<h2>Publisher Dashboard</h2>
+<p>Welcome, {{ user.username }}</p>
+<a href="{% url 'news_app:create_post' %}">Create Post</a>
+<a href="{% url 'news_app:home' %}">Home</a>

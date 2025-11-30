@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}My News App{% endblock %}</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'newsapp/style.css' %}">
+</head>
+<body>
+
+    <!-- Header -->
+    <header class="header">
+        {% block header %}My NewsApp{% endblock %}
+    </header>
+
+    <!-- Main section title -->
+    <div class="main">
+        {% block main_title %}Articles and Newsletters For All Readers{% endblock %}
+    </div>
+
+    <!-- Posts container -->
+    <div class="posts-container">
+        {% block content %}
+        <!-- Example post card -->
+        <div class="post-card">
+            <div class="post-title">Post Title</div>
+            <div class="post-content">
+                This is a sample post content. It can be either an article or a newsletter summary.
+            </div>
+            <div class="post-meta">By Admin | Oct 18, 2025</div>
+        </div>
+        {% endblock %}
+    </div>
+    <!-- Footer -->
+    <footer class="footer-style">
+        {% block footer %}© 2025 News App{% endblock %}
+    </footer>
+
+</body>
+</html>

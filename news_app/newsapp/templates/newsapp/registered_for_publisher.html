@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Registration Successful</title>
+</head>
+<body>
+
+    <h2>Successfully Registered!</h2>
+
+    <p>
+        You have successfully registered as a
+        <strong>{{ role|title }}</strong> under
+        <strong>{{ publisher.user.username }}</strong>.
+    </p>
+
+    {% if role == "journalist" %}
+        <a href="{% url 'news_app:home' %}">
+            <button>Go to Journalist Home</button>
+        </a>
+    {% elif role == "editor" %}
+        <a href="{% url 'news_app:home' %}">
+            <button>Go to Editor Home</button>
+        </a>
+    {% endif %}
+
+</body>
+</html>

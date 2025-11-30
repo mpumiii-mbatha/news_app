@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5 d-flex flex-column align-items-center">
+
+    <!-- Success Message -->
+    <div class="alert alert-success text-center w-75">
+        <h2 class="mb-2">🎉 Successfully Subscribed!</h2>
+    </div>
+
+    <!-- Subscribed Publishers -->
+    {% if subscriptions %}
+        <div class="w-75 mb-4">
+            <h3 class="text-primary fw-bold mb-3">Publishers You Follow</h3>
+            <ul class="list-group">
+                {% for sub in subscriptions %}
+                    {% if sub.type == "publisher" %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            {{ sub.publisher.user.username }}
+                        </li>
+                    {% endif %}
+                {% endfor %}
+            </ul>
+        </div>
+
+        <!-- Subscribed Journalists -->
+        <div class="w-75 mb-4">
+            <h3 class="text-success fw-bold mb-3">Journalists You Follow</h3>
+            <ul class="list-group">
+                {% for sub in subscriptions %}
+                    {% if sub.type == "journalist" %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            {{ sub.journalist.user.username }}
+                        </li>
+                    {% endif %}
+                {% endfor %}
+            </ul>
+        </div>
+    {% else %}
+        <p>An issue has occured with your subscriptions.</p>
+        <a href="{% url 'news_app:subscribe' %}" class="btn btn-gradient btn-lg">
+            Subcribe to Publishers and Journalists
+        </a>
+    {% endif %}
+
+    <!-- Button to Read Articles/Newsletters -->
+    <div class="mt-4">
+        <a href="{% url 'news_app:article_list' %}" class="btn btn-gradient btn-lg">
+            Read Other Articles and Newsletters
+        </a>
+    </div>
+
+    <!-- Return to Home -->
+    <div class="mt-3">
+        <a href="{% url 'news_app:home' %}" class="btn btn-secondary">Return to Home</a>
+    </div>
+</div>
+
+<style>
+/* Gradient Button */
+.btn-gradient {
+    background: linear-gradient(45deg, #635e69ff, #9ea9bcff);
+    color: white;
+    border: none;
+    font-weight: bold;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+.btn-gradient:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+/* List Group Styling */
+.list-group-item {
+    font-size: 1.1rem;
+    padding: 12px 15px;
+    border-radius: 0.5rem;
+    margin-bottom: 5px;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+.list-group-item:hover {
+    transform: translateX(5px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+</style>
+{% endblock %}

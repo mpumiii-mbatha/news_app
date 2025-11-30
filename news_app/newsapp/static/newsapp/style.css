@@ -1,0 +1,121 @@
+/* news_app/static/newsapp/style.css */
+
+/* Body with grey-to-white gradient background */
+body {
+    font-family: "Times New Roman", Times, serif;
+    background: linear-gradient(to bottom, #5d5c5c, #ffffff);
+    color: #1c1c1c;
+    margin: 0;
+    padding: 0;
+}
+
+/* Header */
+.header {
+    text-align: center;
+    font-family: "Times New Roman", Times, serif;
+    font-weight: bold;
+    color: #111111;
+    font-size: 36px;
+    letter-spacing: 1px;
+    margin-top: 1rem;
+}
+
+/* Main section */
+.main {
+    text-align: center;
+    font-family: "Times New Roman", Times, serif;
+    font-weight: bold;
+    color: #222222;
+    font-size: 28px;
+    margin-bottom: 1rem;
+}
+
+/* Body */
+.body {
+    text-align: left;
+    font-family: "Times New Roman", Times, serif;
+    color: #333333;
+    font-size: 18px;
+    line-height: 1.6;
+    margin: 1rem auto;
+    max-width: 800px;
+}
+
+/* Unified Post Card */
+.post-card {
+    background-color: #7f7d7d;
+    border-left: 5px solid #555555;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    width: 100%;
+    max-width: 700px;
+    min-height: 180px;
+    border-radius: 8px;
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    margin: 1rem auto;
+    padding: 1rem 1.2rem;
+}
+
+.post-card:hover {
+    transform: scale(1.02);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+/* Post title */
+.post-title {
+    font-family: "Times New Roman", Times, serif;
+    font-weight: bold;
+    font-style: italic;
+    font-size: 20px;
+    color: #111111;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+}
+
+/* Post content */
+.post-content {
+    font-family: "Times New Roman", Times, serif;
+    color: #2a2a2a;
+    font-size: 16px;
+    line-height: 1.5;
+}
+
+/* Post meta info */
+.post-meta {
+    font-family: "Times New Roman", Times, serif;
+    font-size: 12px;
+    color: #555555; /* lighter grey for meta */
+    margin-top: 0.5rem;
+}
+
+
+/* buttons */
+.notes-btn {
+    background-color: #555555;
+    color: #ffffff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    text-transform: uppercase;
+    margin: 0.2rem 0;
+    padding: 0.5rem 1rem;
+    transition: background 0.2s ease, transform 0.1s ease;
+}
+
+.notes-btn:hover {
+    background-color: #777777;
+    transform: scale(1.05);
+}
+
+/* Footer */
+.footer-style {
+    text-align: center;
+    color: #1c1c1c;
+    font-weight: bold;
+    font-size: 12px;
+    font-family: "Times New Roman", Times, serif;
+    margin-top: 2rem;
+}

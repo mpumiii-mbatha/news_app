@@ -1,0 +1,56 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Check Your Email</title>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <style>
+        /* Minimal inline style if you don’t have a CSS file yet */
+        body {
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: #f5f5f5;
+        }
+        .message-box {
+            background: #fff;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        h2 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        p {
+            color: #555;
+        }
+        a.bubble-btn {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 10px 20px;
+            border-radius: 25px;
+            background: #4A90E2;
+            color: white;
+            text-decoration: none;
+            transition: 0.3s;
+        }
+        a.bubble-btn:hover {
+            opacity: 0.85;
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <div class="message-box">
+        <h2>Check Your Email</h2>
+        <p>If an account with that email exists, a password reset link has been sent.</p>
+        <p>Please check your inbox and follow the instructions to reset your password.</p>
+        <a href="{% url 'news_app:login' %}" class="bubble-btn">Return to Login</a>
+    </div>
+</body>
+</html>

@@ -1,0 +1,124 @@
+{% load static %}
+{% block content %}
+<div class="article-list-container">
+    <h2 class="mb-4">Available Articles</h2>
+
+    {% if articles %}
+        <ul class="article-list">
+            {% for article in articles %}
+                <li class="article-item">
+                    <div class="article-info">
+                        <strong>{{ article.title }}</strong><br>
+                        <small>By {{ article.journalist.user.username }} | Published {{ article.created_at }}</small>
+                    </div>
+
+                    <div class="button-group">
+                        <a href="{% url 'news_app:read_article' article.id %}" class="bubble-btn view">Read</a>
+
+                        {% if user.journalist and article.journalist.user == user %}
+                            <a href="{% url 'news_app:update_post' article.id %}" class="bubble-btn edit">Edit</a>
+                            <form action="{% url 'news_app:remove_post' article.id %}" method="POST" style="display:inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="bubble-btn delete">Delete</button>
+                            </form>
+
+                        {% elif user.editor and article.publisher == user.editor.publisher %}
+                            <a href="{% url 'news_app:update_post' article.id %}" class="bubble-btn edit">Edit</a>
+                            <form action="{% url 'news_app:remove_post' article.id %}" method="POST" style="display:inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="bubble-btn delete">Delete</button>
+                            </form>
+
+                        {% elif user.publisher %}
+                            {% if not article.approved %}
+                                <form action="{% url 'news_app:publish_post' %}" method="POST" style="display:inline;">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="post_type" value="article">
+                                    <input type="hidden" name="post_id" value="{{ article.id }}">
+                                    <button type="submit" class="bubble-btn approve">Approve</button>
+                                </form>
+                            {% endif %}
+                            <form action="{% url 'news_app:remove_post' article.id %}" method="POST" style="display:inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="bubble-btn delete">Delete</button>
+                            </form>
+                        {% endif %}
+                    </div>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No articles available yet.</p>
+    {% endif %}
+
+    <div class="mt-4 text-center">
+        <a href="{% url 'news_app:home' %}" class="bubble-btn return-btn">Return to Home</a>
+    </div>
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+.article-list-container {
+    max-width: 800px;
+    margin: 60px auto;
+    padding: 30px;
+    background-color: #78808979;
+    border-radius: 25px;
+    text-align: center;
+    font-family: 'Windorse', sans-serif;
+    color: #737278ff;
+    box-shadow: 0 6px 15px rgba(26, 24, 24, 0.1);
+}
+
+.article-list {
+    list-style: none;
+    padding: 0;
+}
+
+.article-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: white;
+    padding: 15px 20px;
+    border-radius: 25px;
+    margin-bottom: 15px;
+    box-shadow: 0 4px 10px rgba(26, 24, 24, 0.1);
+    color: #444;
+}
+
+.article-info small {
+    color: #777;
+}
+
+.button-group {
+    display: flex;
+    gap: 10px;
+}
+
+.bubble-btn {
+    padding: 10px 20px;
+    border-radius: 25px;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    transition: 0.3s ease;
+    display: inline-block;
+}
+
+/* Matching bubble colors */
+.bubble-btn.view { background: #999999; color: #fff; }
+.bubble-btn.edit { background: #ffc107; color: #fff; }
+.bubble-btn.delete { background: #dc3545; color: #fff; }
+.bubble-btn.approve { background: #28a745; color: #fff; }
+.bubble-btn.return-btn { background: #999999; color: #fff; }
+
+/* Hover effect */
+.bubble-btn:hover {
+    transform: translateY(-2px);
+    opacity: 0.85;
+}
+</style>
+{% endblock %}

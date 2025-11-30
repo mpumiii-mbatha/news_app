@@ -7,8 +7,16 @@ from rest_framework import serializers
 
 class Publisher(models.Model):
     """
-    Publisher class
+     Represents a Publisher in the system.
+
+    Attributes:
+        user (User): One-to-one relationship with Django's User model.
+        published_at (DateTimeField): Timestamp when the publisher profile was created.
+
+    Meta:
+        permissions (list): Custom permissions for publishers.
     """
+
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     published_at = models.DateTimeField(auto_now_add=True)
 
@@ -32,8 +40,17 @@ class PublisherSerializer(serializers.ModelSerializer):
 
 class Journalist(models.Model):
     """
-    Journalist class
+    Represents a Journalist in the system.
+
+    Attributes:
+        user (User): One-to-one relationship with Django's User model.
+        publisher (Publisher): Foreign key to the Publisher the journalist belongs to.
+        created_at (DateTimeField): Timestamp when the journalist profile was created.
+
+    Meta:
+        permissions (list): Custom permissions for journalists.
     """
+
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     publisher = models.ForeignKey(
         Publisher,
@@ -67,8 +84,17 @@ class JournalistSerializer(serializers.ModelSerializer):
 
 class Editor(models.Model):
     """
-    Editor class
+    Represents an Editor in the system.
+
+    Attributes:
+        user (User): One-to-one relationship with Django's User model.
+        publisher (Publisher): Foreign key to the Publisher the editor belongs to.
+        edited_at (DateTimeField): Timestamp when the editor profile was created.
+
+    Meta:
+        permissions (list): Custom permissions for editors.
     """
+
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     publisher = models.ForeignKey(
         Publisher,
@@ -101,8 +127,15 @@ class EditorSerializer(serializers.ModelSerializer):
 
 class Reader(models.Model):
     """
-    Reader class
+    Represents a Reader in the system.
+
+    Attributes:
+        user (User): One-to-one relationship with Django's User model.
+
+    Meta:
+        permissions (list): Custom permissions for readers.
     """
+
     user = models.OneToOneField(User, on_delete=models.CASCADE,
                                 related_name="reader_profile")
 
@@ -117,8 +150,17 @@ class Reader(models.Model):
 
 class Article(models.Model):
     """
-    Article class
+    Represents a news article in the application.
+
+    Attributes:
+        title (str): The title of the article.
+        journalist (Journalist): Author of the article.
+        publisher (Publisher): Publisher of the article.
+        content (TextField): The body text of the article.
+        approved (bool): Indicates whether the article is approved for publishing.
+        created_at (DateTimeField): Timestamp when the article was created.
     """
+
     title = models.CharField(max_length=255)
     journalist = models.ForeignKey(
         Journalist,
@@ -150,8 +192,17 @@ class ArticleSerializer(serializers.ModelSerializer):
 
 class Newsletter(models.Model):
     """
-    Newsletter class
+    Represents a Newsletter published by a journalist.
+
+    Attributes:
+        title (str): The title of the newsletter.
+        journalist (Journalist): Author of the newsletter.
+        publisher (Publisher): Publisher of the newsletter.
+        content (TextField): Body text of the newsletter.
+        approved (bool): Indicates whether the newsletter is approved.
+        created_at (DateTimeField): Timestamp when the newsletter was created.
     """
+
     title = models.CharField(max_length=255)
     journalist = models.ForeignKey(
         Journalist,
@@ -183,8 +234,16 @@ class NewsletterSerializer(serializers.ModelSerializer):
 
 class Subscription(models.Model):
     """
-    Subscription Model
+     Represents a user's subscription to a Publisher or Journalist.
+
+    Attributes:
+        user (User): The user who subscribes.
+        type (str): Subscription type ('publisher' or 'journalist').
+        publisher (Publisher): Optional, if subscribing to a publisher.
+        journalist (Journalist): Optional, if subscribing to a journalist.
+        subscription_date (DateTimeField): Date when the subscription was created.
     """
+
     SUBSCRIPTION_TYPES = [
         ('publisher', 'Publisher'),
         ('journalist', 'Journalist'),
@@ -233,8 +292,15 @@ class SubscriptionSerializer(serializers.ModelSerializer):
 
 class ResetToken(models.Model):
     """
-    Class defining tokens granted to user for password restting
+    Represents a password reset token for a user.
+
+    Attributes:
+        user (User): The user associated with the reset token.
+        token (str): The unique token string.
+        expiry_date (DateTimeField): Expiration date of the token.
+        used (bool): Flag indicating whether the token has been used.
     """
+
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE

@@ -99,10 +99,11 @@ def choose_group(request):
     under which the user will be logged in
 
     Args:
-        request (HttpRequest)
+        request (HttpRequest): The request object
 
     Returns:
-        HttpResponse
+        HttpResponse: Renders group selection
+        or redirects based on selection.
     """
     user = request.user
 
@@ -145,6 +146,16 @@ def choose_group(request):
 
 
 def login_user(request):
+    """
+    Authenticate and log in a user.
+
+    Args:
+        request (HttpRequest): The request object.
+
+    Returns:
+        HttpResponse: Redirects to home on success or renders login form on failure.
+    """
+
     if request.method == 'POST':
         username = request.POST.get('username')
         password = request.POST.get('password')
@@ -181,10 +192,10 @@ def logout_user(request):
     Allows user to logout and return to welcome page
 
     Args:
-        request
+        request (HttpRequest)
 
     Returns:
-        HttpResponse
+        HttpResponse: Redirects to welcome page
     """
     logout(request)
     return redirect('news_app:welcome')
@@ -192,6 +203,17 @@ def logout_user(request):
 
 @login_required
 def home(request):
+    """
+    Render the homepage with a list of all published articles
+    and newsletters.
+
+    Args:
+        request (HttpRequest): The request object.
+
+    Returns:
+        HttpResponse: Renders the 'home.html' template with articles.
+    """
+
     user = request.user
     context = {"options": []}
 
@@ -237,6 +259,16 @@ def home(request):
 @login_required
 # @permission_required('newsapp.join_publisher', raise_exception=True)
 def register_under_publisher(request):
+    """
+    Register a journalist or editor under a selected publisher.
+
+    Args:
+        request (HttpRequest): The request object.
+
+    Returns:
+        HttpResponse: Renders registration confirmation or publisher selection form.
+    """
+
     user = request.user
     pending_role = request.session.get('pending_role')
 
@@ -280,6 +312,16 @@ def register_under_publisher(request):
 
 @login_required
 def subscribe(request):
+    """
+    Allow a user to subscribe to publishers or journalists.
+
+    Args:
+        request (HttpRequest): The request object.
+
+    Returns:
+        HttpResponse: Renders subscription form or redirects on success.
+    """
+
     user = request.user
 
     # Get lists for the dropdowns
@@ -324,6 +366,16 @@ def subscribe(request):
 
 
 def article_list(request):
+    """
+    Display a list of all articles and newsletters.
+
+    Args:
+        request (HttpRequest): The request object.
+
+    Returns:
+        HttpResponse: Renders article and newsletter list template.
+    """
+
     articles = Article.objects.all().order_by('-created_at')
     newsletters = Newsletter.objects.all().order_by('-created_at')
 
@@ -334,6 +386,16 @@ def article_list(request):
 
 # @permission_required('newsapp.can_view')
 def view_mine(request):
+    """
+    Display articles relevant to the logged-in user.
+
+    Args:
+        request (HttpRequest): The request object.
+
+    Returns:
+        HttpResponse: Renders article list for user's role.
+    """
+
     user = request.user
 
     # Journalists: only their articles
@@ -359,8 +421,13 @@ def view_mine(request):
 
 def subscribed_articles(request):
     """
-    Show subscription success and the publishers/journalists
-    the user is subscribed to.
+    Display the subscriptions of the logged-in user.
+
+    Args:
+        request (HttpRequest): The request object.
+
+    Returns:
+        HttpResponse: Renders template with subscription list.
     """
 
     user = request.user
@@ -375,6 +442,17 @@ def subscribed_articles(request):
 
 
 def read_article(request, article_id):
+    """
+    Display the content of a single article.
+
+    Args:
+        request (HttpRequest): The request object.
+        article_id (int): ID of the article to display.
+
+    Returns:
+        HttpResponse: Renders the article template or returns JSON if requested.
+    """
+
     article = get_object_or_404(Article, id=article_id)
     serializer = ArticleSerializer(article)
     if request.headers.get("Accept") == "application/json":
@@ -384,11 +462,16 @@ def read_article(request, article_id):
 
 def view_article(request, article_id):
     """
-    Docstring for view_article
+    View article details with role-specific context.
 
-    :param request: Description
-    :param article_id: Description
+    Args:
+        request (HttpRequest): The request object.
+        article_id (int): ID of the article to view.
+
+    Returns:
+        HttpResponse: Renders article details template or returns JSON data.
     """
+
     user = request.user
     article = get_object_or_404(Article, id=article_id)
 
@@ -412,6 +495,16 @@ def view_article(request, article_id):
 # @login_required
 # @permission_required('newsapp.can_create', raise_exception=True)
 def create_post(request):
+    """
+    Create a new article or newsletter post.
+
+    Args:
+        request (HttpRequest): The request object.
+
+    Returns:
+        HttpResponse: Renders post creation form or redirects after creating a post.
+    """
+
     user = request.user
     publishers = Publisher.objects.all()
 
@@ -458,6 +551,17 @@ def create_post(request):
 @login_required
 # @permission_required('newsapp.can_update', raise_exception=True)
 def update_post(request, post_id):
+    """
+    Update an existing article.
+
+    Args:
+        request (HttpRequest): The request object.
+        post_id (int): ID of the post to update.
+
+    Returns:
+        HttpResponse: Renders update form or redirects after updating.
+    """
+
     post = get_object_or_404(Article, id=post_id)
 
     if request.user != post.journalist.user and not hasattr(request.user, 'editor'):
@@ -490,7 +594,17 @@ def update_post(request, post_id):
 
 # @permission_required('newsapp.can_remove')
 def remove_post(request, post_id):
-    # Try to get the post from Article or Newsletter
+    """
+    Delete an article or newsletter.
+
+    Args:
+        request (HttpRequest): The request object.
+        post_id (int): ID of the post to remove.
+
+    Returns:
+        HttpResponse: Renders confirmation or redirects after deletion.
+    """
+
     post = Article.objects.filter(id=post_id).first()
     post_type = 'article'
     if not post:
@@ -521,6 +635,16 @@ def remove_post(request, post_id):
 
 @login_required
 def publish_post(request):
+    """
+    Approve and publish an article or newsletter.
+
+    Args:
+        request (HttpRequest): The request object.
+
+    Returns:
+        HttpResponse: Renders the post or returns JSON confirmation.
+    """
+
     if request.method != 'POST':
         return JsonResponse({'error': 'POST required'}, status=405)
 
@@ -556,6 +680,17 @@ def publish_post(request):
 
 # Password reset handling
 def build_email(user, reset_link):
+    """
+    Construct an email for password reset.
+
+    Args:
+        user (User): The user to send the reset email to.
+        reset_link (str): The URL for resetting the password.
+
+    Returns:
+        EmailMessage: The email message object ready to send.
+    """
+
     subject = "Reset Password Request"
     body = (
         f"Hi {user.username},\n\n"
@@ -572,6 +707,16 @@ def build_email(user, reset_link):
 
 
 def reset_url(user):
+    """
+    Generate a password reset URL with a secure token.
+
+    Args:
+        user (User): The user requesting password reset.
+
+    Returns:
+        str: The password reset URL.
+    """
+
     domain = "http://127.0.0.1:8000/"
     app_path = "reset-password/update/"
     token = secrets.token_urlsafe(24)
@@ -583,12 +728,29 @@ def reset_url(user):
 
 def send_password_reset_page(request):
     """
-    Display form to enter email for password reset.
+    Render the password reset request form.
+
+    Args:
+        request (HttpRequest): The request object.
+
+    Returns:
+        HttpResponse: Password reset request form template.
     """
+
     return render(request, 'newsapp/send_password_reset.html')
 
 
 def send_password_reset(request):
+    """
+    Send a password reset email to the user.
+
+    Args:
+        request (HttpRequest): The request object.
+
+    Returns:
+        HttpResponse: Renders email sent confirmation or redirects on error.
+    """
+
     if request.method != 'POST':
         messages.error(request, "Please submit your email to reset password.")
         return redirect('news_app:send_password_reset_page')
@@ -608,6 +770,17 @@ def send_password_reset(request):
 
 
 def token_request(request, token):
+    """
+    Validate a password reset token and render reset form.
+
+    Args:
+        request (HttpRequest): The request object.
+        token (str): The reset token.
+
+    Returns:
+        HttpResponse: Renders the password reset template if token is valid.
+    """
+
     hashed = sha1(token.encode()).hexdigest()
     try:
         user_token = ResetToken.objects.get(token=hashed, used=False)
@@ -623,6 +796,16 @@ def token_request(request, token):
 
 
 def reset_password(request):
+    """
+    Reset a user's password using a valid token.
+
+    Args:
+        request (HttpRequest): The request object.
+
+    Returns:
+        HttpResponse: Redirects to login page after success or shows errors.
+    """
+
     if request.method == 'GET':
         # Get token from query params
         token = request.GET.get('token')

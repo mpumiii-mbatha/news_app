@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="article-list-container">
+    <h1>{{ publisher.user.username }}'s Team</h1>
+
+    <h2>Editors</h2>
+    <ul class="article-list">
+        {% for editor in editors %}
+        <li class="article-item">
+            <div class="article-info">
+                <strong>{{ editor.user.username }}</strong>
+                <small>Editor</small>
+            </div>
+        </li>
+        {% empty %}
+        <li class="article-item">
+            <div class="article-info">No editors found.</div>
+        </li>
+        {% endfor %}
+    </ul>
+
+    <h2>Journalists</h2>
+    <ul class="article-list">
+        {% for data in journalists %}
+        <li class="article-item">
+            <div class="article-info">
+                <strong>{{ data.journalist.user.username }}</strong>
+                <small>Journalist</small>
+                <div>
+                    <strong>Articles:</strong>
+                    <ul>
+                        {% for article in data.articles %}
+                        <li>{{ article.title }} {% if article.approved %}(Approved){% endif %}</li>
+                        {% empty %}
+                        <li>No articles yet.</li>
+                        {% endfor %}
+                    </ul>
+                    <strong>Newsletters:</strong>
+                    <ul>
+                        {% for newsletter in data.newsletters %}
+                        <li>{{ newsletter.title }} {% if newsletter.approved %}(Approved){% endif %}</li>
+                        {% empty %}
+                        <li>No newsletters yet.</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </li>
+        {% empty %}
+        <li class="article-item">
+            <div class="article-info">No journalists found.</div>
+        </li>
+        {% endfor %}
+    </ul>
+
+    <a href="{% url 'news_app:home' %}" class="bubble-btn return-btn">Return to Home</a>
+</div>
+
+<style>
+.article-list-container {
+    max-width: 800px;
+    margin: 60px auto;
+    padding: 30px;
+    background-color: #78808979;
+    border-radius: 25px;
+    text-align: center;
+    font-family: 'Windorse', sans-serif;
+    color: #737278ff;
+    box-shadow: 0 6px 15px rgba(26, 24, 24, 0.1);
+}
+
+.article-list {
+    list-style: none;
+    padding: 0;
+}
+
+.article-item {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    background: white;
+    padding: 15px 20px;
+    border-radius: 25px;
+    margin-bottom: 15px;
+    box-shadow: 0 4px 10px rgba(26, 24, 24, 0.1);
+    color: #444;
+}
+
+.article-info small {
+    color: #777;
+}
+
+.bubble-btn {
+    padding: 10px 20px;
+    border-radius: 25px;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    transition: 0.3s ease;
+    display: inline-block;
+}
+
+/* Matching bubble colors */
+.bubble-btn.return-btn { background: #999999; color: #fff; }
+
+/* Hover effect */
+.bubble-btn:hover {
+    transform: translateY(-2px);
+    opacity: 0.85;
+}
+</style>
+{% endblock %}

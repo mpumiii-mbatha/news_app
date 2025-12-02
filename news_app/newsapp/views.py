@@ -7,20 +7,20 @@ from django.urls import reverse
 from django.utils import timezone
 from django.http import HttpResponseRedirect, JsonResponse
 from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.models import Group
+from django.contrib.auth.models import Group, Permission
 from django.contrib.auth.password_validation import validate_password
 from django.core.mail import EmailMessage
 from django.core.exceptions import ValidationError
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
+from django.contrib.contenttypes.models import ContentType
 from .models import (
     User, Reader,
-    Publisher, PublisherSerializer,
-    Journalist, JournalistSerializer,
-    Editor, EditorSerializer,
+    Publisher, Journalist,
+    Editor,
     Article, ArticleSerializer,
     Newsletter, NewsletterSerializer,
-    Subscription, SubscriptionSerializer, ResetToken
+    Subscription, ResetToken
 )
 from .functions.twitter_api import Tweet
 
@@ -42,6 +42,54 @@ def verify_password(password):
     except ValidationError:
         print("Issue with passowrd")
         return False
+
+
+def ensure_group_permissions():
+    """
+    Ensures the user's group permissions are implemented
+
+    Args:
+
+    Returns:
+    """
+    journalist_group, _ = Group.objects.get_or_create(name='Journalist')
+    editor_group, _ = Group.objects.get_or_create(name='Editor')
+    reader_group, _ = Group.objects.get_or_create(name='Reader')
+    publisher_group, _ = Group.objects.get_or_create(name='Publisher')
+
+    # Attaching permissions to Journalist
+    journalist_ct = ContentType.objects.get_for_model(Journalist)
+    journalist_perms = Permission.objects.filter(
+        content_type=journalist_ct,
+        codename__in=['can_update', 'can_create', 'can_remove',
+                      'can_view', 'join_publisher']
+    )
+    journalist_group.permissions.add(*journalist_perms)
+
+    # Attach permissions defined to Editor model
+    editor_ct = ContentType.objects.get_for_model(Editor)
+    editor_perms = Permission.objects.filter(
+        content_type=editor_ct,
+        codename__in=['can_update', 'can_remove',
+                      'can_view', 'join_publisher', 'can_publish']
+    )
+    editor_group.permissions.add(*editor_perms)
+
+    # Attach permissions defined to Reader model
+    reader_ct = ContentType.objects.get_for_model(Reader)
+    reader_perms = Permission.objects.filter(
+        content_type=reader_ct,
+        codename__in=['can_subscribe']
+    )
+    reader_group.permissions.add(*reader_perms)
+
+    # Attach permissions defined to Publisher model
+    publisher_ct = ContentType.objects.get_for_model(Publisher)
+    publisher_perms = Permission.objects.filter(
+        content_type=publisher_ct,
+        codename__in=['can_publish', 'can_view']
+    )
+    publisher_group.permissions.add(*publisher_perms)
 
 
 def welcome(request):
@@ -82,7 +130,8 @@ def register_user(request):
             messages.error(request, "Username already exists.")
             return render(request, 'newsapp/register.html')
 
-        user = User.objects.create_user(username=username, password=password, email=email)
+        user = User.objects.create_user(username=username, password=password,
+                                        email=email)
         login(request, user)
         messages.success(request, "Account created. Please choose your role.")
         return redirect('news_app:choose_group')
@@ -106,6 +155,7 @@ def choose_group(request):
         or redirects based on selection.
     """
     user = request.user
+    ensure_group_permissions()
 
     if request.method == 'POST':
         selected_role = request.POST.get('role')
@@ -121,7 +171,8 @@ def choose_group(request):
             journalist_group = Group.objects.get(name='Journalist')
             user.groups.add(journalist_group)
             request.session['pending_role'] = 'journalist'
-            messages.info(request, "Please select a publisher to register as a Journalist.")
+            messages.info(request,
+                          "Please select a publisher to register")
             return redirect('news_app:register_under_publisher')
 
         elif selected_role == 'editor':
@@ -129,7 +180,8 @@ def choose_group(request):
             user.groups.add(editor_group)
             user = User.objects.get(id=user.id)
             request.session['pending_role'] = 'editor'
-            messages.info(request, "Please choose your publishing house to complete registration.")
+            messages.info(request,
+                          "Choose your publishing house.")
             return redirect('news_app:register_under_publisher')
 
         elif selected_role == 'publisher':
@@ -153,7 +205,7 @@ def login_user(request):
         request (HttpRequest): The request object.
 
     Returns:
-        HttpResponse: Redirects to home on success or renders login form on failure.
+        HttpResponse: Redirects to home on success or renders login.
     """
 
     if request.method == 'POST':
@@ -176,13 +228,15 @@ def login_user(request):
             request.session['roles'] = roles
 
             if request.headers.get("Accept") == "application/json":
-                return JsonResponse({'message': 'Login successful', 'roles': roles})
+                return JsonResponse({'message': 'Login successful',
+                                     'roles': roles})
             return HttpResponseRedirect(reverse('news_app:home'))
 
         # invalid credentials
         if request.headers.get("Accept") == "application/json":
             return JsonResponse({'error': 'Invalid credentials'}, status=401)
-        return render(request, 'newsapp/login.html', {'error': 'Invalid username or password.'})
+        return render(request, 'newsapp/login.html',
+                      {'error': 'Invalid username or password.'})
 
     return render(request, 'newsapp/login.html')
 
@@ -213,39 +267,42 @@ def home(request):
     Returns:
         HttpResponse: Renders the 'home.html' template with articles.
     """
-
+    ensure_group_permissions()
     user = request.user
     context = {"options": []}
 
     if user.groups.filter(name='Publisher').exists():
         context['group'] = 'Publisher'
         context['options'] = [
-            {"label": "Create Article", "url_name": "news_app:create_post"},
+            {"label": "Create Post", "url_name": "news_app:create_post"},
             {"label": "View Submissions", "url_name": "news_app:view_mine"},
-            {"label": "Manage Team", "url_name": "news_app:register_under_publisher"},
+            {"label": "Manage Team",
+             "url_name": "news_app:publisher_team_view"},
         ]
 
     elif user.groups.filter(name='Journalist').exists():
         context['group'] = 'Journalist'
         context['options'] = [
-            {"label": "Write Article", "url_name": "news_app:create_post"},
-            {"label": "View All Articles", "url_name": "news_app:article_list"},
-            {'label': 'View My Articles', 'url_name': 'news_app:view_mine'},
-            {"label": "Join Publisher", "url_name": "news_app:register_under_publisher"},
+            {"label": "Write Post", "url_name": "news_app:create_post"},
+            {"label": "View All Posts", "url_name": "news_app:article_list"},
+            {'label': 'View My Posts', 'url_name': 'news_app:view_mine'},
+            {"label": "Join Publisher",
+             "url_name": "news_app:register_under_publisher"},
         ]
 
     elif user.groups.filter(name='Editor').exists():
         context['group'] = 'Editor'
         context['options'] = [
-            {"label": "View All Articles", "url_name": "news_app:article_list"},
-            {'label': 'Edit/Delete Articles', 'url_name': 'news_app:view_mine'},
-            {"label": "Join Publisher", "url_name": "news_app:register_under_publisher"},
+            {"label": "View All Posts", "url_name": "news_app:article_list"},
+            {'label': 'Edit/Delete Posts', 'url_name': 'news_app:view_mine'},
+            {"label": "Join Publisher",
+             "url_name": "news_app:register_under_publisher"},
         ]
 
     elif user.groups.filter(name='Reader').exists():
         context['group'] = 'Reader'
         context['options'] = [
-            {"label": "Read All Articles", "url_name": "news_app:article_list"},
+            {"label": "Read All Posts", "url_name": "news_app:article_list"},
             {"label": "Subscribe", "url_name": "news_app:subscribe"},
         ]
 
@@ -257,7 +314,6 @@ def home(request):
 
 
 @login_required
-# @permission_required('newsapp.join_publisher', raise_exception=True)
 def register_under_publisher(request):
     """
     Register a journalist or editor under a selected publisher.
@@ -266,7 +322,7 @@ def register_under_publisher(request):
         request (HttpRequest): The request object.
 
     Returns:
-        HttpResponse: Renders registration confirmation or publisher selection form.
+        HttpResponse: Renders registration confirmation or publisher form.
     """
 
     user = request.user
@@ -300,17 +356,20 @@ def register_under_publisher(request):
             editor.save()
             role = "editor"
 
-        messages.success(request, f"{role.title()} successfully registered under {publisher.user.username}.")
+        messages.success(request, f"{role.title()} successfully registered"
+                         f"under {publisher.user.username}.")
         return render(request, 'newsapp/registered_for_publisher.html', {
             'role': role,
             'publisher': publisher
         })
 
     publishers = Publisher.objects.all()
-    return render(request, 'newsapp/register_under_publisher.html', {'publishers': publishers})
+    return render(request, 'newsapp/register_under_publisher.html',
+                  {'publishers': publishers})
 
 
 @login_required
+@permission_required('newsapp.can_subscribe', raise_exception=True)
 def subscribe(request):
     """
     Allow a user to subscribe to publishers or journalists.
@@ -357,7 +416,8 @@ def subscribe(request):
             return redirect('news_app:subscribed_articles')
 
         else:
-            messages.error(request, "Please select at least one publisher or journalist you want to subscribe to.")
+            messages.error(request,
+                           "Select at least one publisher or journalist.")
 
     return render(request, 'newsapp/subscribe.html', {
         'journalists': journalists,
@@ -365,26 +425,94 @@ def subscribe(request):
     })
 
 
+@login_required
+def publisher_team_view(request):
+    """
+    View for a Publisher to see all Editors and Journalists
+    under their publishing house.
+    """
+    try:
+        publisher = request.user.publisher
+    except Publisher.DoesNotExist:
+        # If the user is not a publisher, redirect or show error
+        return render(request, "newsapp/error.html", {
+            "message": "You are not a publisher."
+        })
+
+    # Get all editors and journalists under this publisher
+    editors = Editor.objects.filter(publisher=publisher)
+    journalists = Journalist.objects.filter(publisher=publisher)
+
+    # Optionally, include published articles/newsletters for each journalist
+    journalist_data = []
+    for journalist in journalists:
+        journalist_data.append({
+            "journalist": journalist,
+            "articles": Article.objects.filter(journalist=journalist),
+            "newsletters": Newsletter.objects.filter(journalist=journalist)
+        })
+
+    context = {
+        "publisher": publisher,
+        "editors": editors,
+        "journalists": journalist_data,
+    }
+
+    return render(request, "newsapp/publisher_team.html", context)
+
+
+@login_required
 def article_list(request):
     """
-    Display a list of all articles and newsletters.
+    View for displaying articles to user
 
     Args:
-        request (HttpRequest): The request object.
+        request (HttpRequest): request
 
     Returns:
-        HttpResponse: Renders article and newsletter list template.
+        HttpResponse: list of articles and newsletters
+
     """
+    user = request.user
+    mine_view = request.GET.get('mine') == '1'
 
-    articles = Article.objects.all().order_by('-created_at')
-    newsletters = Newsletter.objects.all().order_by('-created_at')
+    # Articles
+    if mine_view:
+        articles = Article.objects.filter(journalist__user=user)
+        newsletters = Newsletter.objects.filter(journalist__user=user)
+    else:
+        if hasattr(user, 'publisher'):
+            # Publisher sees all articles/newsletters under them
+            articles = Article.objects.filter(publisher=user.publisher)
+            newsletters = Newsletter.objects.filter(publisher=user.publisher)
+        elif hasattr(user, 'editor'):
+            # Editor sees approved articles/newsletters
+            articles = Article.objects.filter(approved=True).union(
+                Article.objects.filter(approved=False,
+                                       publisher=user.editor.publisher)
+            )
+            newsletters = Newsletter.objects.filter(approved=True).union(
+                Newsletter.objects.filter(approved=False,
+                                          publisher=user.editor.publisher)
+            )
+        else:
+            # Normal users: only approved
+            articles = Article.objects.filter(approved=True)
+            newsletters = Newsletter.objects.filter(approved=True)
 
-    return render(request, 'newsapp/article_list.html',
-                  {"articles": articles,
-                   "newsletters": newsletters})
+    context = {
+        'articles': articles,
+        'newsletters': newsletters,
+        'mine_view': mine_view,
+        'is_journalist': hasattr(user, 'journalist'),
+        'is_editor': hasattr(user, 'editor'),
+        'is_publisher': hasattr(user, 'publisher'),
+    }
+
+    return render(request, 'newsapp/article_list.html', context)
 
 
-# @permission_required('newsapp.can_view')
+@permission_required('newsapp.can_view')
 def view_mine(request):
     """
     Display articles relevant to the logged-in user.
@@ -401,20 +529,28 @@ def view_mine(request):
     # Journalists: only their articles
     if hasattr(user, 'journalist'):
         articles = Article.objects.filter(journalist=user.journalist)
+        newsletters = Newsletter.objects.filter(journalist=user.journalist)
 
     # Editors: only articles under their publisher
     elif hasattr(user, 'editor'):
-        articles = Article.objects.filter(journalist__publisher=user.editor.publisher)
+        articles = Article.objects.filter(
+            journalist__publisher=user.editor.publisher)
+        newsletters = Newsletter.objects.filter(
+            journalist__publisher=user.editor.publisher)
 
     # Publishers: only articles submitted to their house
     elif hasattr(user, 'publisher'):
         articles = Article.objects.filter(journalist__publisher=user.publisher)
+        newsletters = Newsletter.objects.filter(
+            journalist__publisher=user.publisher)
 
     else:
         articles = Article.objects.none()
+        newsletters = Newsletter.objects.none()
 
     return render(request, 'newsapp/article_list.html', {
         'articles': articles,
+        'newsletters': newsletters,
         'mine_view': True
     })
 
@@ -450,14 +586,36 @@ def read_article(request, article_id):
         article_id (int): ID of the article to display.
 
     Returns:
-        HttpResponse: Renders the article template or returns JSON if requested.
+        HttpResponse: Renders the article template or returns JSON.
     """
 
     article = get_object_or_404(Article, id=article_id)
     serializer = ArticleSerializer(article)
     if request.headers.get("Accept") == "application/json":
         return JsonResponse(serializer.data, safe=False)
-    return render(request, 'newsapp/read_article.html', {'article': article})
+    return render(request, 'newsapp/read_article.html',
+                  {'article': article})
+
+
+def read_newsletter(request, newsletter_id):
+    """
+    Display the content of a single newsletter.
+
+    Args:
+        request (HttpRequest): The request object.
+        newsletter_id (int): ID of the newsletter to display.
+
+    Returns:
+        HttpResponse: Renders the newsletter template.
+    """
+    newsletter = get_object_or_404(Newsletter, id=newsletter_id)
+    serializer = NewsletterSerializer(newsletter)
+
+    if request.headers.get("Accept") == "application/json":
+        return JsonResponse(serializer.data, safe=False)
+
+    return render(request, 'newsapp/read_newsletter.html',
+                  {'newsletter': newsletter})
 
 
 def view_article(request, article_id):
@@ -493,7 +651,7 @@ def view_article(request, article_id):
 
 
 # @login_required
-# @permission_required('newsapp.can_create', raise_exception=True)
+@permission_required('newsapp.can_create', raise_exception=True)
 def create_post(request):
     """
     Create a new article or newsletter post.
@@ -502,7 +660,7 @@ def create_post(request):
         request (HttpRequest): The request object.
 
     Returns:
-        HttpResponse: Renders post creation form or redirects after creating a post.
+        HttpResponse: Renders post creation form or redirects.
     """
 
     user = request.user
@@ -522,34 +680,35 @@ def create_post(request):
         publisher = get_object_or_404(Publisher, id=publisher_id)
 
         if post_type == 'article':
-            post = Article.objects.create(title=title, content=content, journalist=journalist, publisher=publisher, approved=False)
+            post = Article.objects.create(title=title, content=content,
+                                          journalist=journalist,
+                                          publisher=publisher, approved=False)
             serializer = ArticleSerializer(post)
         elif post_type == 'newsletter':
-            post = Newsletter.objects.create(title=title, content=content, journalist=journalist, publisher=publisher, approved=False)
+            post = Newsletter.objects.create(title=title, content=content,
+                                             journalist=journalist,
+                                             publisher=publisher,
+                                             approved=False)
             serializer = NewsletterSerializer(post)
         else:
             return JsonResponse({'error': 'Invalid post type'}, status=400)
 
         if request.headers.get("Accept") == "application/json":
-            return JsonResponse({'message': 'Post created successfully', 'data': serializer.data}, status=201)
+            return JsonResponse({'message': 'Post created successfully',
+                                 'data': serializer.data}, status=201)
 
-        messages.success(request, f'{post_type.title()} "{title}" posted under {publisher.user.username}.')
-
-        # optional tweet
-        try:
-            post_tweet = f"New Post by {journalist.user.username}: {post.title}"
-            tweet = Tweet()
-            tweet.make_tweet({'text': post_tweet})
-        except Exception:
-            pass
+        messages.success(request,
+                         f'{post_type.title()} "{title}" posted under'
+                         f'{publisher.user.username}.')
 
         return redirect('news_app:home')
 
-    return render(request, 'newsapp/create_post.html', {'publishers': publishers})
+    return render(request, 'newsapp/create_post.html',
+                  {'publishers': publishers})
 
 
 @login_required
-# @permission_required('newsapp.can_update', raise_exception=True)
+@permission_required('newsapp.can_update', raise_exception=True)
 def update_post(request, post_id):
     """
     Update an existing article.
@@ -564,8 +723,9 @@ def update_post(request, post_id):
 
     post = get_object_or_404(Article, id=post_id)
 
-    if request.user != post.journalist.user and not hasattr(request.user, 'editor'):
-        messages.error(request, "You don't have permission to update this post.")
+    if request.user != post.journalist.user and not hasattr(request.user,
+                                                            'editor'):
+        messages.error(request, "You don't have permission.")
         return redirect('news_app:home')
 
     if request.method == 'POST':
@@ -581,7 +741,8 @@ def update_post(request, post_id):
         if hasattr(request.user, 'journalist'):
             return redirect('news_app:view_mine')
 
-        messages.success(request, f'Article "{post.title}" updated successfully.')
+        messages.success(request,
+                         f'Article "{post.title}" updated successfully.')
 
         if request.headers.get("Accept") == "application/json":
             return JsonResponse({
@@ -592,7 +753,54 @@ def update_post(request, post_id):
     return render(request, 'newsapp/update_post.html', {'post': post})
 
 
-# @permission_required('newsapp.can_remove')
+@permission_required('newsapp.can_update', raise_exception=True)
+def update_newsletter(request, newsletter_id):
+    """
+    Update an existing newsletter.
+
+    Args:
+        request (HttpRequest): The request object.
+        post_id (int): ID of the newsletter to update.
+
+    Returns:
+        HttpResponse: Renders update form or redirects after updating.
+    """
+
+    newsletter = get_object_or_404(Newsletter, id=newsletter_id)
+
+    if request.user != newsletter.journalist.user and not hasattr(
+        request.user, 'editor'):
+        messages.error(request,
+                       "You don't have permission to update this post.")
+        return redirect('news_app:home')
+
+    if request.method == 'POST':
+        title = request.POST.get('title')
+        content = request.POST.get('content')
+
+        if title:
+            newsletter.title = title
+        if content:
+            newsletter.content = content
+        newsletter.save()
+
+        if hasattr(request.user, 'journalist'):
+            return redirect('news_app:view_mine')
+
+        messages.success(request,
+                         f'"{newsletter.title}" updated successfully.')
+
+        if request.headers.get("Accept") == "application/json":
+            return JsonResponse({
+                'message': 'Post updated',
+                'data': NewsletterSerializer(newsletter).data
+            })
+
+    return render(request, 'newsapp/update_newsletter.html',
+                  {'newsletter': newsletter})
+
+
+@permission_required('newsapp.can_remove', raise_exception=True)
 def remove_post(request, post_id):
     """
     Delete an article or newsletter.
@@ -617,9 +825,12 @@ def remove_post(request, post_id):
 
     if request.method == 'POST':
         # Only owner, editor, or publisher can delete
-        if hasattr(request.user, 'journalist') and getattr(post, 'journalist', None) and post.journalist.user != request.user:
-            if not hasattr(request.user, 'editors') and not hasattr(request.user, 'publisher'):
-                messages.error(request, "You don't have permission to remove this post.")
+        if hasattr(request.user, 'journalist') and getattr(
+            post, 'journalist', None) and post.journalist.user != request.user:
+            if not hasattr(request.user, 'editors') and not hasattr(
+                request.user, 'publisher'):
+                messages.error(request,
+                               "You don't have permission.")
                 return redirect('news_app:home')
 
         post.delete()
@@ -634,6 +845,7 @@ def remove_post(request, post_id):
 
 
 @login_required
+@permission_required('newsapp.can_publish', raise_exception=True)
 def publish_post(request):
     """
     Approve and publish an article or newsletter.
@@ -651,29 +863,71 @@ def publish_post(request):
     post_type = request.POST.get('post_type')
     post_id = request.POST.get('post_id')
 
-    # check user is a publisher
-    if not hasattr(request.user, 'publisher'):
-        return JsonResponse({'error': 'User is not a publisher.'}, status=403)
-    publisher = request.user.publisher
+    # check user is a publisher OR editor
+    if not (hasattr(request.user, 'publisher') or hasattr(request.user,
+                                                          'editor')):
+        return JsonResponse({'error': 'User is not a publisher or editor.'},
+                            status=403)
+
+    # determine publisher for permission checks
+    if hasattr(request.user, 'publisher'):
+        publisher = request.user.publisher
+    elif hasattr(request.user, 'editor'):
+        publisher = request.user.editor.publisher
 
     if post_type == 'article':
         article = get_object_or_404(Article, id=post_id)
+
+        # ensure editor can only approve articles from their publisher
+        if hasattr(request.user, 'editor') and article.publisher != publisher:
+            return JsonResponse(
+                {'error': 'Editor cannot approve this article.'}, status=403)
+
         article.approved = True
         article.save()
 
+        post_tweet = f"New Post by {publisher}: {article.title}"
+
+        try:
+            tweet = Tweet()
+            tweet.make_tweet({'text': post_tweet})
+        except Exception as e:
+            print(f"Twitter post failed: {e}")
+
         if request.headers.get("Accept") == "application/json":
-            return JsonResponse({'message': 'Article published', 'article': ArticleSerializer(article).data})
+            return JsonResponse({'message': 'Article published',
+                                 'article': ArticleSerializer(article).data})
         messages.success(request, f'Article "{article.title}" published.')
-        return render(request, 'newsapp/read_article.html', {'article': article})
+        return render(request, 'newsapp/read_article.html',
+                      {'article': article})
 
     elif post_type == 'newsletter':
         newsletter = get_object_or_404(Newsletter, id=post_id)
+
+        # ensure editor can only approve newsletters from their publisher
+        if hasattr(request.user, 'editor') and newsletter.publisher != publisher:
+            return JsonResponse(
+                {'error': 'Editor cannot approve this newsletter.'},
+                status=403)
+
         newsletter.approved = True
         newsletter.save()
+
+        post_tweet = f"New Post by {publisher}: {newsletter.title}"
+
+        try:
+            tweet = Tweet()
+            tweet.make_tweet({'text': post_tweet})
+        except Exception as e:
+            print(f"Twitter post failed: {e}")
+
         if request.headers.get("Accept") == "application/json":
-            return JsonResponse({'message': 'Newsletter published', 'newsletter': NewsletterSerializer(newsletter).data})
-        messages.success(request, f'Newsletter "{newsletter.title}" published.')
-        return render(request, 'newsapp/read_article.html', {'article': newsletter})
+            return JsonResponse({'message': 'Newsletter published',
+                                 'newsletter': NewsletterSerializer(newsletter).data})
+        messages.success(request,
+                         f'Newsletter "{newsletter.title}" published.')
+        return render(request, 'newsapp/read_article.html',
+                      {'article': newsletter})
 
     return JsonResponse({'error': 'Invalid post type.'}, status=400)
 
@@ -792,7 +1046,8 @@ def token_request(request, token):
         messages.error(request, "Token expired.")
         return redirect('news_app:send_password_reset')
 
-    return render(request, 'newsapp/password_reset.html', {'token': token if user_token else None})
+    return render(request, 'newsapp/password_reset.html',
+                  {'token': token if user_token else None})
 
 
 def reset_password(request):

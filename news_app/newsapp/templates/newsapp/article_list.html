@@ -1,7 +1,13 @@
 {% load static %}
 {% block content %}
 <div class="article-list-container">
-    <h2 class="mb-4">Available Articles</h2>
+    <h2 class="mb-4">
+    {% if mine_view %}
+        My Articles
+    {% else %}
+        Available Articles
+    {% endif %}
+    </h2>
 
     {% if articles %}
         <ul class="article-list">
@@ -15,20 +21,36 @@
                     <div class="button-group">
                         <a href="{% url 'news_app:read_article' article.id %}" class="bubble-btn view">Read</a>
 
+                        {# Journalist buttons (for their own posts) #}
                         {% if user.journalist and article.journalist.user == user %}
+                            {% if mine_view %}
+                                <span class="badge bg-info">
+                                    {{ article.approved|yesno:"Approved,Pending Approval" }}
+                                </span>
+                            {% endif %}
                             <a href="{% url 'news_app:update_post' article.id %}" class="bubble-btn edit">Edit</a>
                             <form action="{% url 'news_app:remove_post' article.id %}" method="POST" style="display:inline;">
                                 {% csrf_token %}
                                 <button type="submit" class="bubble-btn delete">Delete</button>
                             </form>
 
+                        {# Editor buttons (for articles under same publisher) #}
                         {% elif user.editor and article.publisher == user.editor.publisher %}
+                            {% if not article.approved %}
+                                <form action="{% url 'news_app:publish_post' %}" method="POST" style="display:inline;">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="post_type" value="article">
+                                    <input type="hidden" name="post_id" value="{{ article.id }}">
+                                    <button type="submit" class="bubble-btn approve">Approve</button>
+                                </form>
+                            {% endif %}
                             <a href="{% url 'news_app:update_post' article.id %}" class="bubble-btn edit">Edit</a>
                             <form action="{% url 'news_app:remove_post' article.id %}" method="POST" style="display:inline;">
                                 {% csrf_token %}
                                 <button type="submit" class="bubble-btn delete">Delete</button>
                             </form>
 
+                        {# Publisher buttons (if needed) #}
                         {% elif user.publisher %}
                             {% if not article.approved %}
                                 <form action="{% url 'news_app:publish_post' %}" method="POST" style="display:inline;">
@@ -49,6 +71,64 @@
         </ul>
     {% else %}
         <p>No articles available yet.</p>
+    {% endif %}
+
+    {# Newsletters Section (similar logic) #}
+    <h2 class="mb-4 mt-5">Available Newsletters</h2>
+    {% if newsletters %}
+        <ul class="article-list">
+            {% for newsletter in newsletters %}
+                <li class="article-item">
+                    <div class="article-info">
+                        <strong>{{ newsletter.title }}</strong><br>
+                        <small>By {{ newsletter.journalist.user.username }} | Published {{ newsletter.created_at }}</small>
+                    </div>
+
+                    <div class="button-group">
+                        <a href="{% url 'news_app:read_newsletter' newsletter.id %}" class="bubble-btn view">Read</a>
+
+                        {% if user.journalist and newsletter.journalist.user == user %}
+                            <a href="{% url 'news_app:update_newsletter' newsletter.id %}" class="bubble-btn edit">Edit</a>
+                            <form action="{% url 'news_app:remove_post' newsletter.id %}" method="POST" style="display:inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="bubble-btn delete">Delete</button>
+                            </form>
+
+                        {% elif user.editor and newsletter.publisher == user.editor.publisher %}
+                            {% if not newsletter.approved %}
+                                <form action="{% url 'news_app:publish_post' %}" method="POST" style="display:inline;">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="post_type" value="newsletter">
+                                    <input type="hidden" name="post_id" value="{{ newsletter.id }}">
+                                    <button type="submit" class="bubble-btn approve">Approve</button>
+                                </form>
+                            {% endif %}
+                            <a href="{% url 'news_app:update_newsletter' newsletter.id %}" class="bubble-btn edit">Edit</a>
+                            <form action="{% url 'news_app:remove_post' newsletter.id %}" method="POST" style="display:inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="bubble-btn delete">Delete</button>
+                            </form>
+
+                        {% elif user.publisher %}
+                            {% if not newsletter.approved %}
+                                <form action="{% url 'news_app:publish_post' %}" method="POST" style="display:inline;">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="post_type" value="newsletter">
+                                    <input type="hidden" name="post_id" value="{{ newsletter.id }}">
+                                    <button type="submit" class="bubble-btn approve">Approve</button>
+                                </form>
+                            {% endif %}
+                            <form action="{% url 'news_app:remove_post' newsletter.id %}" method="POST" style="display:inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="bubble-btn delete">Delete</button>
+                            </form>
+                        {% endif %}
+                    </div>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No newsletters available yet.</p>
     {% endif %}
 
     <div class="mt-4 text-center">

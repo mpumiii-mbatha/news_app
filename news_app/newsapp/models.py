@@ -11,7 +11,8 @@ class Publisher(models.Model):
 
     Attributes:
         user (User): One-to-one relationship with Django's User model.
-        published_at (DateTimeField): Timestamp when the publisher profile was created.
+        published_at (DateTimeField): Timestamp when the
+        publisher profile was created.
 
     Meta:
         permissions (list): Custom permissions for publishers.
@@ -26,6 +27,7 @@ class Publisher(models.Model):
     class Meta:
         permissions = [
             ("can_publish", "Can publish posts"),
+            ("can_view", "Can view own articles"),
         ]
 
 
@@ -44,8 +46,10 @@ class Journalist(models.Model):
 
     Attributes:
         user (User): One-to-one relationship with Django's User model.
-        publisher (Publisher): Foreign key to the Publisher the journalist belongs to.
-        created_at (DateTimeField): Timestamp when the journalist profile was created.
+        publisher (Publisher): Foreign key to the
+        Publisher the journalist belongs to.
+        created_at (DateTimeField): Timestamp when the
+        journalist profile was created.
 
     Meta:
         permissions (list): Custom permissions for journalists.
@@ -88,8 +92,10 @@ class Editor(models.Model):
 
     Attributes:
         user (User): One-to-one relationship with Django's User model.
-        publisher (Publisher): Foreign key to the Publisher the editor belongs to.
-        edited_at (DateTimeField): Timestamp when the editor profile was created.
+        publisher (Publisher): Foreign key to the
+        Publisher the editor belongs to.
+        edited_at (DateTimeField): Timestamp when the
+        editor profile was created.
 
     Meta:
         permissions (list): Custom permissions for editors.
@@ -113,6 +119,7 @@ class Editor(models.Model):
             ("can_remove", "Can delete posts"),
             ("join_publsiher", "Can join publisher"),
             ("can_view", "Can view own articles"),
+            ("can_publish", "Can publish posts"),
         ]
 
 
@@ -157,7 +164,8 @@ class Article(models.Model):
         journalist (Journalist): Author of the article.
         publisher (Publisher): Publisher of the article.
         content (TextField): The body text of the article.
-        approved (bool): Indicates whether the article is approved for publishing.
+        approved (bool): Indicates whether the article is approved for
+        publishing.
         created_at (DateTimeField): Timestamp when the article was created.
     """
 
@@ -176,7 +184,7 @@ class Article(models.Model):
     approved = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
-    def __str__(self):
+    def __str__(self):  # pylint: disable=no-member
         return self.title
 
 

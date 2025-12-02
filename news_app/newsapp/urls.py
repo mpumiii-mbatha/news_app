@@ -1,6 +1,7 @@
 '''Imported Modules'''
 from django.urls import path
 from . import views
+from . import api_views
 
 app_name = 'news_app'
 
@@ -13,9 +14,11 @@ urlpatterns = [
     path('choose-group/', views.choose_group, name='choose_group'),
     path('home/', views.home, name='home'),
 
-    # Publisher registration
+    # Publisher registration/view
     path('register/publisher/', views.register_under_publisher,
          name='register_under_publisher'),
+    path('publisher/team/', views.publisher_team_view,
+         name='publisher_team_view'),
 
     # Subscriptions
     path('subscribe/', views.subscribe, name='subscribe'),
@@ -26,7 +29,7 @@ urlpatterns = [
     path('articles/mine/', views.view_mine,
          name='view_mine'),
     path('article/view/<int:article_id>/', views.view_article,
-          name='view_article'),
+         name='view_article'),
     path('subscribed/', views.subscribed_articles,
          name='subscribed_articles'),
     path('article/read/<int:article_id>/', views.read_article,
@@ -37,22 +40,28 @@ urlpatterns = [
          name='remove_post'),
     path('article/create/', views.create_post, name='create_post'),
     path('article/publish/', views.publish_post, name='publish_post'),
+    path('newsletter/read/<int:newsletter_id>/', views.read_newsletter,
+         name='read_newsletter'),
+    path('newsletter/update/<int:newsletter_id>/', views.update_newsletter,
+         name='update_newsletter'),
 
     # Password reset
-     path('password-reset/', views.send_password_reset_page, name='send_password_reset_page'),
-     path('send-reset/', views.send_password_reset, name='send_password_reset'),
-     # token_request handling
-     path('reset-password/', views.token_request, name='token_request'),
-     path('reset-password/update/', views.reset_password, name='reset_password'),
+    path('password-reset/', views.send_password_reset_page,
+         name='send_password_reset_page'),
+    path('send-reset/', views.send_password_reset, name='send_password_reset'),
+    # token_request handling
+    path('reset-password/', views.token_request, name='token_request'),
+    path('reset-password/update/', views.reset_password,
+         name='reset_password'),
 ]
 
 # API Endpoints
 urlpatterns += [
-    path('api/articles/', views.article_list, name='api_article_list'),
-    path('api/articles/mine/', views.view_mine, name='api_view_mine'),
-    path('api/article/<int:article_id>/', views.view_article, name='api_view_article'),
-    path('api/subscribe/', views.subscribe, name='api_subscribe'),
-    path('api/article/create/', views.create_post, name='api_create_post'),
-    path('api/article/update/<int:post_id>/', views.update_post, name='api_update_post'),
-    path('api/article/remove/<int:post_id>/', views.remove_post, name='api_remove_post'),
+    path('api/articles/', api_views.api_articles, name='api_articles'),
+    path('api/articles/create/', api_views.api_create_article,
+         name='api_create_article'),
+    path('api/newsletters/', api_views.api_newsletters,
+         name='api_newsletters'),
+    path('api/newsletters/create/', api_views.api_create_newsletter,
+         name='api_create_newsletter'),
 ]

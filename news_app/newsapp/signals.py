@@ -59,7 +59,8 @@ def groups_permissions(sender, **kwargs):  # pylint: disable=unused-argument
         )
 
         readers.permissions.add(can_subscribe)
-        publishers.permissions.add(can_publish)
+        publishers.permissions.add(can_publish, can_view)
         journalists.permissions.add(can_create, can_view,
-                                     can_update, can_remove, join_publisher)
-        editors.permissions.add(can_view, can_update, can_remove, join_publisher)
+                                    can_update, can_remove, join_publisher)
+        editors.permissions.add(can_view, can_update, can_remove,
+                                join_publisher)

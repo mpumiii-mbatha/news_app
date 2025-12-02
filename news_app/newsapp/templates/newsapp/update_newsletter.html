@@ -1,7 +1,7 @@
 {% load static %}
 {% block content %}
 <div class="create-post-container">
-    <h2>Update Post</h2>
+    <h2>Update Newsletter</h2>
 
     {% if messages %}
         {% for message in messages %}
@@ -16,17 +16,17 @@
         {% csrf_token %}
 
         <label>Title:</label>
-        <input type="text" name="title" placeholder="Enter title" value="{{ post.title }}" required>
+        <input type="text" name="title" placeholder="Enter title" value="{{ newsletter.title }}" required>
 
         <label>Content:</label>
-        <textarea name="content" placeholder="Enter content" required>{{ post.content }}</textarea>
+        <textarea name="content" placeholder="Enter content" required>{{ newsletter.content }}</textarea>
 
         {% if publishers %}
             <label>Publisher:</label>
             <select name="publisher_id" required>
                 {% for publisher in publishers %}
                     <option value="{{ publisher.id }}"
-                        {% if post.publisher and post.publisher.id == publisher.id %}
+                        {% if newsletter.publisher and newsletter.publisher.id == publisher.id %}
                             selected
                         {% endif %}
                     >

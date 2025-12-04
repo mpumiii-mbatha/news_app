@@ -20,7 +20,7 @@ NewsApp simulates a real-world newsroom workflow using Django.
 It provides structured content creation, editing, approval, and publishing.
 Readers can subscribe to newsletters, while staff members manage editorial content with permission-based access.
 
-## Installation - NB - You must use the zip file to run the app
+## Installation - NB - You must download the zip file to run the app
 1. **Clone or download the zip file containing the NewsApp Django project.**
 2. Navigate to the project directory in your terminal.
 3. Create and activate a virtual environment:

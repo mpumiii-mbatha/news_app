@@ -4,12 +4,13 @@ from datetime import datetime, timedelta
 from hashlib import sha1
 from django.shortcuts import get_object_or_404, render, redirect
 from django.urls import reverse
+from django.conf import settings
 from django.utils import timezone
 from django.http import HttpResponseRedirect, JsonResponse
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import Group, Permission
 from django.contrib.auth.password_validation import validate_password
-from django.core.mail import EmailMessage
+from django.core.mail import EmailMessage, send_mail
 from django.core.exceptions import ValidationError
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
@@ -849,12 +850,6 @@ def remove_post(request, post_id):
 def publish_post(request):
     """
     Approve and publish an article or newsletter.
-
-    Args:
-        request (HttpRequest): The request object.
-
-    Returns:
-        HttpResponse: Renders the post or returns JSON confirmation.
     """
 
     if request.method != 'POST':
@@ -886,46 +881,86 @@ def publish_post(request):
         article.approved = True
         article.save()
 
-        post_tweet = f"New Post by {publisher}: {article.title}"
+        subscribers = Subscription.objects.filter(
+            type='publisher',
+            publisher=publisher
+        )
 
+        emails = [sub.user.email for sub in subscribers if sub.user.email]
+
+        if emails:
+            send_mail(
+                subject=f"New Article Published: {article.title}",
+                message=f"A new article has been published by"
+                        f"{publisher.user.username}.\n\nTitle:"
+                        f"{article.title}\n\n{article.content[:200]}...",
+                from_email=settings.EMAIL_HOST_USER,
+                recipient_list=emails,
+                fail_silently=True,
+            )
+
+        # Post tweet
+        post_tweet = f"New Post by {publisher}: {article.title}"
         try:
             tweet = Tweet()
-            tweet.make_tweet({'text': post_tweet})
+            tweet.make_tweet(post_tweet)
         except Exception as e:
             print(f"Twitter post failed: {e}")
 
         if request.headers.get("Accept") == "application/json":
-            return JsonResponse({'message': 'Article published',
-                                 'article': ArticleSerializer(article).data})
-        messages.success(request, f'Article "{article.title}" published.')
-        return render(request, 'newsapp/read_article.html',
-                      {'article': article})
+            return JsonResponse({
+                'message': 'Article published',
+                'article': ArticleSerializer(article).data
+            })
 
+        messages.success(request, f'Article "{article.title}" published.')
+        return render(request, 'newsapp/read_article.html', {'article': article})
+
+    # NEWSLETTER PUBLISHING
+    # -------------------------------------------------------------------------
     elif post_type == 'newsletter':
         newsletter = get_object_or_404(Newsletter, id=post_id)
 
         # ensure editor can only approve newsletters from their publisher
         if hasattr(request.user, 'editor') and newsletter.publisher != publisher:
-            return JsonResponse(
-                {'error': 'Editor cannot approve this newsletter.'},
-                status=403)
+            return JsonResponse({'error': 'Editor cannot approve this newsletter.'}, status=403)
 
         newsletter.approved = True
         newsletter.save()
 
-        post_tweet = f"New Post by {publisher}: {newsletter.title}"
+        subscribers = Subscription.objects.filter(
+            type='publisher',
+            publisher=publisher
+        )
 
+        emails = [sub.user.email for sub in subscribers if sub.user.email]
+
+        if emails:
+            send_mail(
+                subject=f"New Newsletter: {newsletter.title}",
+                message=f"{publisher.user.username} just released a new"
+                        f"newsletter.\n\nTitle:"
+                        f"{newsletter.title}\n\n{newsletter.content[:200]}...",
+                from_email=settings.EMAIL_HOST_USER,
+                recipient_list=emails,
+                fail_silently=True,
+            )
+
+        # Tweet
+        post_tweet = f"New Post by {publisher}: {newsletter.title}"
         try:
             tweet = Tweet()
-            tweet.make_tweet({'text': post_tweet})
+            tweet.make_tweet(post_tweet)
         except Exception as e:
             print(f"Twitter post failed: {e}")
 
         if request.headers.get("Accept") == "application/json":
-            return JsonResponse({'message': 'Newsletter published',
-                                 'newsletter': NewsletterSerializer(newsletter).data})
-        messages.success(request,
-                         f'Newsletter "{newsletter.title}" published.')
+            return JsonResponse({
+                'message': 'Newsletter published',
+                'newsletter': NewsletterSerializer(newsletter).data
+            })
+
+        messages.success(request, f'Newsletter "{newsletter.title}" published.')
         return render(request, 'newsapp/read_article.html',
                       {'article': newsletter})
 

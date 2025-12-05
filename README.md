@@ -5,6 +5,9 @@ A Django application for managing and publishing news articles and newsletters.
 NewsApp is a role-based publishing system that allows **journalists**, **editors**, **publishers**, and **readers** to interact with articles and newsletters.
 Journalists can write content, editors can review and approve, publishers can publish final articles, and readers can subscribe and read publicly available posts.
 
+## Documentation
+Full project documentation, including API reference, can be found in newsapp/docs.
+
 ## This project includes:
 - Role-based access control  
 - Newsletter subscriptions  

@@ -141,6 +141,11 @@ Before running the project, ensure you have the following installed:
 6. The app should now be accessible at
    http://localhost:8000/
 
+## Documentation
+Documentation is included in the /docs/ directory, containing:
+1. Developer documentation
+2. API documentation
+3. Architecture notes
 
 ## Contributing
 

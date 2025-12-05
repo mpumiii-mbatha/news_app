@@ -61,6 +61,7 @@ Before running the project, ensure you have the following installed:
 3. Install dependencies
    pip install -r requirements.txt
 4. Create an .env file in the root directory:
+
    TWITTER_API_KEY=yourkey
    TWITTER_API_SECRET=yoursecret
    TWITTER_ACCESS_TOKEN=yourtoken

@@ -67,7 +67,8 @@ Before running the project, ensure you have the following installed:
    TWITTER_ACCESS_SECRET=yoursecrettoken
 
 ## MariaDB Installation
-1. Paste this exact code into your settings.py
+1. Paste this exact code into your settings.py:
+
    DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
